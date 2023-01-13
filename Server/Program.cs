@@ -11,6 +11,8 @@ var services = builder.Services;
 services.AddScoped<WeatherForecastService>();
 services.Configure<MongoDBSettings>(builder.Configuration.GetSection("MongoDB"));
 
+services.AddScoped<IMongoDBContext, MongoDBContext>();
+
 services.AddScoped<ILocationDAO, LocationDAO>();
 services.AddScoped<ILogger, Logger<LocationDAO>>();
 services.AddScoped<ILogger, Logger<LocationService>>();

@@ -1,26 +1,20 @@
-﻿using BlazorGrpc.Server.Settings;
-using BlazorGrpc.Shared.Domain;
-using Microsoft.Extensions.Options;
+﻿using BlazorGrpc.Shared.Domain;
 using MongoDB.Bson;
 using MongoDB.Driver;
 using System.Linq.Expressions;
 
 namespace BlazorGrpc.Server.Infrastructure
 {
+
     public class RobotDAO
     {
         private readonly IMongoCollection<Robot> _collection;
-        private readonly IMongoClient _client;
-        private readonly IMongoDatabase _database;
 
-        private readonly LocationDAO _locationDAO;
+        private readonly ILocationDAO _locationDAO;
 
-        public RobotDAO(IOptions<MongoDBSettings> settings, LocationDAO locationDAO)
+        public RobotDAO(IMongoDBContext context, ILocationDAO locationDAO)
         {
-
-            _client = new MongoClient(settings.Value.ConnectionString);
-            _database = _client.GetDatabase(settings.Value.DatabaseName);
-            _collection = _database.GetCollection<Robot>(settings.Value.CollectionName_Robots);
+            _collection = context.GetCollection<Robot>();
             _locationDAO = locationDAO;
         }
 
@@ -28,7 +22,7 @@ namespace BlazorGrpc.Server.Infrastructure
         {
             // check if there's already data that matches new data's name
             var filter = Builders<Robot>.Filter.Eq("name", robot.Name);
-            var existing = _collection.Find(filter).SingleOrDefault();
+            var existing = _collection.FindSync(filter).SingleOrDefault();
             if (existing == null)
             {
                 return null;
@@ -56,11 +50,11 @@ namespace BlazorGrpc.Server.Infrastructure
 
         public List<Robot> FindRobots(Expression<Func<Robot, bool>> filter)
         {
-            return _collection.Find(filter).ToList();
+            return _collection.FindSync(filter).ToList();
         }
         public List<Robot> FindRobots()
         {
-            return _collection.Find(new BsonDocument()).ToList();
+            return _collection.FindSync(new BsonDocument()).ToList();
         }
 
         public UpdateResult UpdateRobot(string id, Robot robot)

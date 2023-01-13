@@ -1,8 +1,6 @@
 ﻿using BlazorGrpc.Server.Infrastructure;
-using BlazorGrpc.Server.Settings;
 using BlazorGrpc.Shared.Domain;
 using BlazorGrpc.Shared.LoggerHelper;
-using Microsoft.Extensions.Options;
 using MongoDB.Bson;
 using MongoDB.Driver;
 using System.Linq.Expressions;
@@ -11,16 +9,11 @@ using System.Reflection;
 public class LocationDAO : ILocationDAO
 {
     private readonly IMongoCollection<Location> _collection;
-    private readonly IMongoClient _client;
-    private readonly IMongoDatabase _database;
     private readonly ILogger? _logger;
 
-    public LocationDAO(IOptions<MongoDBSettings> settings, ILogger? logger)
+    public LocationDAO(IMongoDBContext context, ILogger? logger)
     {
-
-        _client = new MongoClient(settings.Value.ConnectionString);
-        _database = _client.GetDatabase(settings.Value.DatabaseName);
-        _collection = _database.GetCollection<Location>(settings.Value.CollectionName_Locations);
+        _collection = context.GetCollection<Location>();
         _logger = logger;
     }
 
@@ -58,9 +51,9 @@ public class LocationDAO : ILocationDAO
         var coordinateFilter = Builders<Location>.Filter.Eq("x", location.X) & Builders<Location>.Filter.Eq("y", location.Y);
         var nameFilter = Builders<Location>.Filter.Eq("name", location.Name);
 
-        var e1 = _collection.Find(l => l.Id == location.Id).FirstOrDefault();
-        var e2 = _collection.Find(coordinateFilter).FirstOrDefault();
-        var e3 = _collection.Find(nameFilter).FirstOrDefault();
+        var e1 = _collection.FindSync(l => l.Id == location.Id).FirstOrDefault();
+        var e2 = _collection.FindSync(coordinateFilter).FirstOrDefault();
+        var e3 = _collection.FindSync(nameFilter).FirstOrDefault();
 
         // check if there's already data that matches new data's id
         try
@@ -113,15 +106,15 @@ public class LocationDAO : ILocationDAO
 
     public List<Location> GetLocations()
     {
-        return _collection.Find(_ => true).ToList();
+        return _collection.FindSync(_ => true).ToList();
     }
     public List<Location> FindLocations(FilterDefinition<Location> coordinateFilter)
     {
-        return _collection.Find(coordinateFilter).ToList();
+        return _collection.FindSync(coordinateFilter).ToList();
     }
     public List<Location> FindLocations(Expression<Func<Location, bool>> filter)
     {
-        return _collection.Find(filter).ToList();
+        return _collection.FindSync(filter).ToList();
     }
     public UpdateResult UpdateLocation(string id, Location location)
     {
@@ -182,7 +175,7 @@ public class LocationDAO : ILocationDAO
     private UpdateResult UpdateLocationBasedOnFields(string id, string id_new, BsonDocument updateFields, List<string>? removeFields = default)
     {
         // Find the document with the matching id
-        var doc = _collection.Find(l => l.Id == id).FirstOrDefault();
+        var doc = _collection.FindSync(l => l.Id == id).FirstOrDefault();
         if (doc == null)
         {
             throw new Exception("No document with matching id found");

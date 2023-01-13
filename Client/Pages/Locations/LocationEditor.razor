@@ -1,0 +1,84 @@
+@page "/locations/edit/{locationId}"
+@inject LocationProto.LocationProtoClient client
+@inject NavigationManager Navigation
+
+<h1>Edit Location</h1>
+
+<p>This component demonstrates editing data using the gRPC service.</p>
+
+@if (location == null)
+{
+    <p><em>Loading...</em></p>
+
+    <p>@locationId</p>
+}
+else
+{
+    <div class="form-group">
+        <label asp-for="Name" class="control-label">Name</label>
+        <input for="Name" class="form-control" @bind="@name" />
+    </div>
+    <div class="form-group">
+        <label asp-for="RobotId" class="control-label">RobotId</label>
+        <input for="RobotId" class="form-control" @bind="@robotId" />
+    </div>
+    <div class="form-group">
+        <button type="submit" class="btn btn-danger" @onclick="@(async () => await HandleUpdate())">Update</button>
+    </div>
+
+
+    <button type="button" class="btn btn-primary" @onclick="HandleAttach">Attach</button>
+
+    <button type="button" class="btn btn-danger" @onclick="@(async () => await HandleDelete())">Delete</button>
+}
+
+
+
+
+
+@code {
+    [Parameter] public string locationId { get; set; }
+
+    private string name;
+    private string robotId;
+
+    private LocationResponse location;
+
+    protected override async Task OnInitializedAsync()
+    {
+        location = await client.GetLocationByIdAsync(new LocationId { Id = locationId });
+        name = location.Name;
+    }
+
+    private void HandleAttach()
+    {
+        try
+        {
+            Navigation.NavigateTo($"/locations/attach-robot/{locationId}");
+        }
+        catch (InvalidOperationException e)
+        {
+            
+            Console.WriteLine("Error: Invalid locationId or robotId provided"+e);
+        }
+    }
+
+    private async Task HandleUpdate()
+    {
+        UpdateLocationObj update = new UpdateLocationObj
+            {
+                Name = name,
+                RobotIds = { robotId }
+            };
+        // Update the location data in the BlazorGrpc.Server using the gRPC client
+        await client.UpdateLocationAsync(new LocationIdAndUpdate { Id = locationId, Update = update });
+        Navigation.NavigateTo("/locations");
+
+    }
+
+    private async Task HandleDelete()
+    {
+        await client.DeleteLocationAsync(new LocationId { Id = locationId });
+        Navigation.NavigateTo("/locations");
+    }
+}

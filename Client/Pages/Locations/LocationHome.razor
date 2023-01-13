@@ -1,0 +1,87 @@
+﻿@page "/locations"
+@inject LocationProto.LocationProtoClient client
+
+
+<h1>Locations Data</h1>
+
+<p>This component demonstrates fetching data from the gRPC service.</p>
+
+
+@if (locations == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <div class="card-footer">
+        <button class="btn btn-primary" @onclick="HandleCreate">Create</button>
+    </div>
+    
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>Name</th>
+                <th>X</th>
+                <th>Y</th>
+                <th>RobotIds</th>
+                
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var location in locations)
+            {
+                <tr>
+                    <td>@location.Id</td>
+                    <td>@location.Name</td>
+                    <td>@location.X</td>
+                    <td>@location.Y</td>
+                    <td>@location.RobotIds</td>
+
+                    <td>
+                        <a href='/locations/edit/@location.Id'>Edit</a>  |
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+
+    [Inject] public NavigationManager Navigation { get; set; }
+
+    private string locationId;
+
+    private IList<LocationResponse> locations;
+
+    protected override async Task OnInitializedAsync()
+    {
+        locations = (await client.GetLocationsAsync(new Empty())).Locations;
+    }
+
+    private void HandleCreate()
+    {
+        try
+        {
+            Navigation.NavigateTo("/locations/create");
+        }
+        catch (InvalidOperationException e)
+        {
+            Console.WriteLine("Error: Invalid locationId or robotId provided" + e);
+        }
+    }
+
+    private void HandleEdit(string locationId)
+    {
+        try
+        {
+            Navigation.NavigateTo($"/locations/edit/{locationId}");
+        }
+        catch (InvalidOperationException e)
+        {
+            Console.WriteLine("Error: Invalid locationId or robotId provided" + e);
+        }
+    }
+
+}

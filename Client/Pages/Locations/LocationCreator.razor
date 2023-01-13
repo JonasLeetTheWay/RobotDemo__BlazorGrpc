@@ -1,0 +1,38 @@
+@page "/locations/create"
+@inject LocationProto.LocationProtoClient client
+@inject NavigationManager Navigation
+
+
+<h2>Create new location</h2>
+
+<p>This component demonstrates creating data using the gRPC service.</p>
+
+
+<div class="form-group">
+    <label for="Name" class="control-label">Name</label>
+    <input for="Name" class="form-control" @bind="@location.Name" />
+</div>
+<div class="form-group">
+    <label asp-for="X" class="control-label">X</label>
+    <input for="X" class="form-control" @bind="@location.X" />
+</div>
+<div class="form-group">
+    <label asp-for="Y" class="control-label">Y</label>
+    <input asp-for="Y" class="form-control" @bind="location.Y" />
+</div>
+<div class="form-group">
+    <button type="submit" class="btn btn-default" @onclick="@(async () => await HandleCreate())">Create</button>
+</div>
+
+
+@code {
+    private AddLocationRequest location = new AddLocationRequest();
+    private string locationId;
+    private IList<LocationResponse> locations;
+
+    private async Task HandleCreate()
+    {
+        locationId = (await client.AddLocationAsync(location)).Id;
+        Navigation.NavigateTo("/locations");
+    }
+}

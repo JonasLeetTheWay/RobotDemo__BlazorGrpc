@@ -1,0 +1,10 @@
+﻿syntax = "proto3";
+
+option csharp_namespace = "BlazorGrpc.Shared";
+
+message LocationId { // filter
+  string id = 1;
+}
+message RobotId{ // filter
+  string id=1;
+}

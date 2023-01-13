@@ -1,0 +1,93 @@
+@page "/locations/attach-robot/{locationId}"
+@inject LocationProto.LocationProtoClient client
+
+
+<h3>Attach Robot to Location</h3>
+
+<p>This component demonstrates editing data using the gRPC service.</p>
+
+@if (location == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <div class="form-group">
+        <label asp-for="Name" class="control-label">LocationId</label>
+        <input for="Name" class="form-control" @bind="@locationId" />
+    </div>
+    <div class="form-group">
+        <label asp-for="RobotId" class="control-label">RobotId</label>
+        <input for="RobotId" class="form-control" @bind="@robotId" />
+    </div>
+    <div class="form-group">
+        <button type="submit" class="btn btn-danger" @onclick="@(async () => await HandleAddRobotId())">Add RobotId</button>
+    </div>
+    <div class="form-group">
+        <button type="submit" class="btn btn-danger" @onclick="@(async () => await HandleDeleteRobotId())">Remove RobotId</button>
+    </div>
+
+    <div>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Id</th>
+                    <th>Name</th>
+                    <th>X</th>
+                    <th>Y</th>
+                    <th>RobotIds</th>
+
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var location in locations)
+                {
+                    <tr>
+                        <td>@location.Id</td>
+                        <td>@location.Name</td>
+                        <td>@location.X</td>
+                        <td>@location.Y</td>
+                        <td>@location.RobotIds</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+}
+
+
+
+
+
+@code {
+
+    [Parameter] public string locationId { get; set; }
+
+    [Inject] public NavigationManager Navigation { get; set; }
+
+    
+    private string robotId { get; set; }
+    
+    private IList<LocationResponse> locations;
+    private LocationResponse location;
+
+    protected override async Task OnInitializedAsync()
+    {
+        location = await client.GetLocationByIdAsync(new LocationId { Id = locationId });
+        locations = (await client.GetLocationsAsync(new Empty())).Locations;
+    }
+    
+
+    private async Task HandleAddRobotId()
+    {
+        await client.AddRobotToLocationAsync(new LocationIdAndRobotId { LocationId = locationId, RobotId = robotId});
+        //await hubConnection.InvokeAsync("AddRobotToLocationAsync", new LocationIdAndRobotId { LocationId = locationId, RobotId = robotId });
+    }
+    
+    private async Task HandleDeleteRobotId()
+    {
+        await client.RemoveRobotFromLocationAsync(new LocationIdAndRobotId { LocationId = locationId, RobotId = robotId });
+        //await hubConnection.InvokeAsync("RemoveRobotFromLocationAsync", new LocationIdAndRobotId { LocationId = locationId, RobotId = robotId });
+    }
+}

@@ -1,8 +1,7 @@
-﻿using BlazorGrpc.Shared;
-using BlazorGrpc.Shared.Domain;
+﻿using BlazorGrpc.Shared.Domain;
 using MongoDB.Bson;
 
-namespace Common.TestDataGenerator;
+namespace BlazorGrpc.Shared.DataGenerator;
 
 public class LocationProtoDataGenerator
 {

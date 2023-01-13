@@ -1,4 +1,5 @@
 ﻿using BlazorGrpc.Server.Settings;
+using BlazorGrpc.Shared.DataGenerator;
 using BlazorGrpc.Shared.Domain;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -7,23 +8,11 @@ using MongoDB.Driver;
 using Moq;
 using Xunit.Abstractions;
 
-namespace Backend.Tests.UnitTests;
+namespace Server.Tests.UnitTests;
 
 
 
-public static class TestDataGenerator
-{
-    public static Location GenerateLocation(string name, double x, double y, string? id = default)
-    {
-        return new Location
-        {
-            Id = id ?? ObjectId.GenerateNewId().ToString(),
-            Name = name,
-            X = x,
-            Y = y
-        };
-    }
-}
+
 
 public class LocationComparer : IEqualityComparer<Location>
 {
@@ -69,7 +58,7 @@ public class LocationDAOTests
     public void InsertLocation_ShouldInsertNewLocation_WhenLocationDoesNotExist()
     {
         // Arrange
-        var location = TestDataGenerator.GenerateLocation("Test Location", 1.0, 2.0);
+        var location = DomainDataGenerator.GenerateLocation("Test Location", 1.0, 2.0);
         var expectedId = location.Id;
 
         // Act
@@ -87,7 +76,7 @@ public class LocationDAOTests
     public void VerifyExistance_ShouldReturnNull_WhenLocationDoesNotExist()
     {
         // Arrange
-        var location = TestDataGenerator.GenerateLocation("Test Location", 1.0, 2.0);
+        var location = DomainDataGenerator.GenerateLocation("Test Location", 1.0, 2.0);
         // Act
         var result = dao.VerifyExistance(location);
 
@@ -99,7 +88,7 @@ public class LocationDAOTests
     public void VerifyExistance_ShouldReturnLocation_WhenLocationExistsWithSameId()
     {
         // Arrange
-        var location = TestDataGenerator.GenerateLocation("Test Location", 1.0, 2.0);
+        var location = DomainDataGenerator.GenerateLocation("Test Location", 1.0, 2.0);
         dao.InsertLocation(location);
 
         // Act
@@ -113,7 +102,7 @@ public class LocationDAOTests
     public void VerifyExistance_ShouldReturnLocation_WhenLocationExistsWithSameCoordinates()
     {
         // Arrange
-        var location = TestDataGenerator.GenerateLocation("Test Location", 1.0, 2.0);
+        var location = DomainDataGenerator.GenerateLocation("Test Location", 1.0, 2.0);
         dao.InsertLocation(location);
         var expectedLocation = location;
         // Act
@@ -129,8 +118,8 @@ public class LocationDAOTests
     public void VerifyExistance_ShouldThrowException_WhenLocationExistsWithSameNameAndDifferentCoordinates()
     {
         // Arrange
-        var location = TestDataGenerator.GenerateLocation("Test Location", 1.0, 2.0);
-        var existingLocation = TestDataGenerator.GenerateLocation(location.Name, 3.0, 4.0);
+        var location = DomainDataGenerator.GenerateLocation("Test Location", 1.0, 2.0);
+        var existingLocation = DomainDataGenerator.GenerateLocation(location.Name, 3.0, 4.0);
         dao.InsertLocation(existingLocation);
         _logger.WriteLine(existingLocation.ToString());
         bool exceptionThrown = false;
@@ -157,8 +146,8 @@ public class LocationDAOTests
     public void GetLocations_ShouldReturnAllLocations_WhenCalled()
     {
         // Arrange
-        var location1 = TestDataGenerator.GenerateLocation("Test Location 1", 1.0, 2.0);
-        var location2 = TestDataGenerator.GenerateLocation("Test Location 2", 3.0, 4.0);
+        var location1 = DomainDataGenerator.GenerateLocation("Test Location 1", 1.0, 2.0);
+        var location2 = DomainDataGenerator.GenerateLocation("Test Location 2", 3.0, 4.0);
         dao.InsertLocation(location1);
         dao.InsertLocation(location2);
 
@@ -178,7 +167,7 @@ public class LocationDAOTests
     public void FindLocations_ShouldReturnLocation_WhenFilterMatchesSingleLocation()
     {
         // Arrange
-        var location = TestDataGenerator.GenerateLocation("Test Location", 1.0, 2.0);
+        var location = DomainDataGenerator.GenerateLocation("Test Location", 1.0, 2.0);
         _logger.WriteLine(location.Id);
 
         dao.InsertLocation(location);
@@ -202,15 +191,15 @@ public class LocationDAOTests
     public void FindLocations_ShouldReturnLocations_WhenFilterMatchesMultipleLocations_1()
     {
         // Arrange
-        var location1 = TestDataGenerator.GenerateLocation("Test Location 1", 1.0, 2.0);
+        var location1 = DomainDataGenerator.GenerateLocation("Test Location 1", 1.0, 2.0);
         dao.InsertLocation(location1);
         _logger.WriteLine(location1.Id);
 
-        var location2 = TestDataGenerator.GenerateLocation("Test Location 2", 3.0, 4.0);
+        var location2 = DomainDataGenerator.GenerateLocation("Test Location 2", 3.0, 4.0);
         dao.InsertLocation(location2);
         _logger.WriteLine(location2.Id);
 
-        var location3 = TestDataGenerator.GenerateLocation("Test Location 3", 5.0, 6.0);
+        var location3 = DomainDataGenerator.GenerateLocation("Test Location 3", 5.0, 6.0);
         dao.InsertLocation(location3);
         _logger.WriteLine(location3.Id);
 
@@ -240,9 +229,9 @@ public class LocationDAOTests
         // Arrange
         // location1 & location 2 have same coordinate, therefore only the last inserted document shall persist, but with the initial id!
         // so 
-        var location1 = TestDataGenerator.GenerateLocation("Test Location 1", 1.0, 2.0);
-        var location2 = TestDataGenerator.GenerateLocation("Test Location 2", 1.0, 2.0);
-        var location3 = TestDataGenerator.GenerateLocation("Test Location 3", 3.0, 4.0);
+        var location1 = DomainDataGenerator.GenerateLocation("Test Location 1", 1.0, 2.0);
+        var location2 = DomainDataGenerator.GenerateLocation("Test Location 2", 1.0, 2.0);
+        var location3 = DomainDataGenerator.GenerateLocation("Test Location 3", 3.0, 4.0);
         var expectedLocation = location2;
         expectedLocation.Id = location1.Id;
         dao.InsertLocation(location1);
@@ -272,8 +261,8 @@ public class LocationDAOTests
     public void FindLocations_ShouldReturnEmptyList_WhenFilterDoesNotMatchAnyLocations()
     {
         // Arrange
-        var location1 = TestDataGenerator.GenerateLocation("Test Location 1", 1.0, 2.0);
-        var location2 = TestDataGenerator.GenerateLocation("Test Location 2", 3.0, 4.0);
+        var location1 = DomainDataGenerator.GenerateLocation("Test Location 1", 1.0, 2.0);
+        var location2 = DomainDataGenerator.GenerateLocation("Test Location 2", 3.0, 4.0);
         dao.InsertLocation(location1);
         dao.InsertLocation(location2);
         var expectedLocations = new List<Location>(); // empty list
@@ -293,10 +282,10 @@ public class LocationDAOTests
     public void UpdateLocation_ShouldUpdateLocation_WhenLocationExists()
     {
         // Arrange
-        var location = TestDataGenerator.GenerateLocation("Test Location", 1.0, 2.0);
+        var location = DomainDataGenerator.GenerateLocation("Test Location", 1.0, 2.0);
         dao.InsertLocation(location);
 
-        var updatedLocation = TestDataGenerator.GenerateLocation("Updated Test Location", 2.0, 3.0, location.Id);
+        var updatedLocation = DomainDataGenerator.GenerateLocation("Updated Test Location", 2.0, 3.0, location.Id);
 
         // Act
         dao.UpdateLocation(location.Id, updatedLocation);
@@ -312,7 +301,7 @@ public class LocationDAOTests
     public void UpdateLocation_ShouldThrowException_WhenLocationDoesNotExist()
     {
         // Arrange
-        var location = TestDataGenerator.GenerateLocation("Test Location", 1.0, 2.0);
+        var location = DomainDataGenerator.GenerateLocation("Test Location", 1.0, 2.0);
         var invalidId = ObjectId.GenerateNewId().ToString();
 
         // Act and Assert
@@ -328,7 +317,7 @@ public class LocationDAOTests
     public void DeleteLocation_ShouldDeleteLocation_WhenLocationExists()
     {
         // Arrange
-        var location = TestDataGenerator.GenerateLocation("Test Location", 1.0, 2.0);
+        var location = DomainDataGenerator.GenerateLocation("Test Location", 1.0, 2.0);
         dao.InsertLocation(location);
 
         // Act
@@ -344,7 +333,7 @@ public class LocationDAOTests
     public void AddRobotToLocation_ShouldAddRobotToLocation_ForMatchingLocationAndRobotId()
     {
         // Arrange
-        var location = TestDataGenerator.GenerateLocation("Test Location", 1.0, 2.0);
+        var location = DomainDataGenerator.GenerateLocation("Test Location", 1.0, 2.0);
         var robotId = ObjectId.GenerateNewId().ToString();
         _logger.WriteLine(robotId);
 
@@ -373,7 +362,7 @@ public class LocationDAOTests
     public void RemoveRobotFromLocation_ShouldRemoveRobotFromLocation_ForMatchingLocationAndRobotId()
     {
         // Arrange
-        var location = TestDataGenerator.GenerateLocation("Test Location", 1.0, 2.0);
+        var location = DomainDataGenerator.GenerateLocation("Test Location", 1.0, 2.0);
         var robotId = ObjectId.GenerateNewId().ToString();
         _logger.WriteLine(robotId);
 

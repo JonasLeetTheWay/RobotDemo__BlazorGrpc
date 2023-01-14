@@ -10,6 +10,28 @@ using Xunit.Abstractions;
 
 namespace Server.Tests.UnitTests;
 
+
+static class MockHelper
+{
+    public static void VerifyFindSync<T>(this Mock<IMongoCollection<T>> mock, Times times)
+    {
+        mock.Verify(
+        c => c.FindSync(It.IsAny<FilterDefinition<T>>(), It.IsAny<FindOptions<T, T>>(), It.IsAny<CancellationToken>()),
+    times);
+    }
+
+    public static void VerifyUpdateOne<T>(this Mock<IMongoCollection<T>> mock, Times times)
+    {
+        mock.Verify(
+        c => c.UpdateOne(It.IsAny<FilterDefinition<T>>(), It.IsAny<UpdateDefinition<T>>(), It.IsAny<UpdateOptions>(), It.IsAny<CancellationToken>()),
+            times);
+    }
+
+
+    
+}
+
+
 public class DAOTests_MockDb<T>
 {
     protected readonly ITestOutputHelper _logger;

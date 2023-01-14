@@ -132,6 +132,7 @@ public class LocationDAOTests_MockDb : DAOTests_MockDb<Location>
     {
         // Arrange
         var _list = DomainDataGenerator.GenerateRandomLocations(3);
+        TestLog("expected: ", _list);
 
         // Mock MoveNext
         Mock<IAsyncCursor<Location>> _cursor = new Mock<IAsyncCursor<Location>>();
@@ -155,6 +156,7 @@ public class LocationDAOTests_MockDb : DAOTests_MockDb<Location>
 
         // Act
         var result = _locationDAO.GetLocations();
+        TestLog("res: ", res);
 
         // Assert 
         for (int i = 0; i < result.Count; i++)
@@ -194,6 +196,7 @@ public class LocationDAOTests_MockDb : DAOTests_MockDb<Location>
 
         // expect empty list (since we assume no existing location found in _mockCollection)
         var _list = new List<Location>();
+        TestLog("generated Id: ", expectedId);
         
         _logger.WriteLine("DomainDataGenerator.GenerateLocation generated Id: " + expectedId);
 
@@ -225,7 +228,7 @@ public class LocationDAOTests_MockDb : DAOTests_MockDb<Location>
 
         // Act
         var result = _locationDAO.Object.InsertLocation(location);
-        _logger.WriteLine("locationDAO generated Id: " + result);
+        TestLog("locationDAO generated Id: ", res);
         
 
         // Assert
@@ -268,6 +271,7 @@ public class LocationDAOTests_MockDb : DAOTests_MockDb<Location>
 
         // Act
         var result = _locationDAO.Object.VerifyExistance(location);
+        TestLog("res: ", res);
 
         // Assert 
         Assert.Null(result);
@@ -278,23 +282,41 @@ public class LocationDAOTests_MockDb : DAOTests_MockDb<Location>
     }
 
    
+        TestLog("expected Location: ", expected);
 
+        TestLog("locFilter: ", locFilter);
+        TestLog("res: ", res);
     [Fact]
     public void VerifyExistance_ShouldReturnLocation_WhenLocationExistsWithSameId() { }
+        TestLog("expected Location: ", expected);
 
+        TestLog("locFilter: ", locFilter);
+        TestLog("res: ", res);
     [Fact]
     public void VerifyExistance_ShouldReturnLocation_WhenLocationExistsWithSameCoordinates() { }
+        TestLog("expected Location: ", expected);
 
+        TestLog("locFilter: ", locFilter);
+        TestLog("res: ", res);
     [Fact]
     public void VerifyExistance_ShouldThrowException_WhenLocationExistsWithSameNameAndDifferentCoordinates() { }
+        TestLog("expected Location: ", expected);
 
+        TestLog("locFilter: ", locFilter);
 
+        TestLog("res: ", res);
     [Fact]
     public void FindLocations_ShouldReturnLocation_WhenFilterMatchesSingleLocation() { }
+        TestLog("locFilter: ", locFilter);
 
+        TestLog("_list item: ", _list);
+        TestLog("res: ", result);
     [Fact]
     public void FindLocations_ShouldReturnMultipleLocations_WhenFilterMatchesMultipleLocations() { }
+        TestLog("locFilter: ", locFilter);
 
+        TestLog("_list item: ", _list);
+        TestLog("res: ", result);
     [Fact]
     public void UpdateLocation_ShouldUpdateLocation_WhenFilterMatchesSingleLocation() { }
 

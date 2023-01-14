@@ -135,10 +135,100 @@ public class LocationDAOTests_MockDb : DAOTests_MockDb<Location>
     }
 
     [Fact]
-    public void InsertLocation_ShouldInsertNewLocation_WhenLocationDoesNotExist() { }
+    public void InsertLocation_ShouldInsertNewLocation_WhenLocationDoesNotExist() {
+        //// Assumption: no existing location found in _mockCollection
+
+        // Arrange
+        var location = DomainDataGenerator.GenerateLocation(); 
+      
+        var expectedId = location.Id;
+
+        // expect empty list (since we assume no existing location found in _mockCollection)
+        var _list = new List<Location>();
+        
+        _logger.WriteLine("DomainDataGenerator.GenerateLocation generated Id: " + expectedId);
+
+        // Mock IAsyncCursor
+        Mock<IAsyncCursor<Location>> _cursor = new Mock<IAsyncCursor<Location>>();
+        _cursor.Setup(_ => _.Current).Returns(_list);
+
+        // Mock FindSync
+        _mockCollection.Setup(op => op.FindSync(It.IsAny<FilterDefinition<Location>>(),
+        It.IsAny<FindOptions<Location, Location>>(),
+        It.IsAny<CancellationToken>())).Returns(_cursor.Object);
+
+
+        // Mock InsertOne, since LocationDAO's InsertLocation is expected to be called
+        _mockCollection.Setup(c => c.InsertOne(It.IsAny<Location>(), It.IsAny<InsertOneOptions>(),
+        It.IsAny<CancellationToken>()));
+
+        // Mock UpdateResult 
+        Mock<UpdateResult> _update = new Mock<UpdateResult>();
+        _update.Setup(u => u.IsAcknowledged).Returns(true);
+
+        // Mock UpdateOne, since LocationDAO's UpdateLocation might be called (IF THERE IS ERROR)
+        _mockCollection.Setup(c => c.UpdateOne(It.IsAny<FilterDefinition<Location>>(), It.IsAny<UpdateDefinition<Location>>(), It.IsAny<UpdateOptions>(), It.IsAny<CancellationToken>())).Returns(_update.Object);
+            
+
+        _mockContext.Setup(c => c.GetCollection<Location>()).Returns(_mockCollection.Object);
+
+        var _locationDAO = new Mock<LocationDAO>(_mockContext.Object, _mockLogger.Object);
+
+        // Act
+        var result = _locationDAO.Object.InsertLocation(location);
+        _logger.WriteLine("locationDAO generated Id: " + result);
+        
+
+        // Assert
+        Assert.Equal(expectedId, result);
+
+        // VerifyFindSync if InsertOne is called once
+        _mockCollection.Verify(
+            c => c.InsertOne(It.IsAny<Location>(), It.IsAny<InsertOneOptions>(),It.IsAny<CancellationToken>()), 
+            Times.Once);
+
+        // VerifyFindSync if UpdateOne is never called (since we assume no existing location found in _mockCollection)
+        _mockCollection.Verify(
+            c => c.UpdateOne(It.IsAny<FilterDefinition<Location>>(), It.IsAny<UpdateDefinition<Location>>(), It.IsAny<UpdateOptions>(), It.IsAny<CancellationToken>()),
+            Times.Never()
+            );
+    }
 
     [Fact]
-    public void VerifyExistance_ShouldReturnNull_WhenLocationDoesNotExist() { }
+    public void VerifyExistance_ShouldReturnNull_WhenLocationDoesNotExist() {
+        //// Assumption: no existing location found in _mockCollection
+
+        // Arrange
+        var location = DomainDataGenerator.GenerateLocation();
+        
+        // expect empty list (since we assume no existing location found in _mockCollection)
+        var _list = new List<Location>();
+
+        // Mock IAsyncCursor
+        Mock<IAsyncCursor<Location>> _cursor = new Mock<IAsyncCursor<Location>>();
+        _cursor.Setup(_ => _.Current).Returns(_list);
+
+        // Mock FindSync
+        _mockCollection.Setup(op => op.FindSync(It.IsAny<FilterDefinition<Location>>(),
+        It.IsAny<FindOptions<Location, Location>>(),
+        It.IsAny<CancellationToken>())).Returns(_cursor.Object);
+
+        _mockContext.Setup(c => c.GetCollection<Location>()).Returns(_mockCollection.Object);
+
+        var _locationDAO = new Mock<LocationDAO>(_mockContext.Object, _mockLogger.Object);
+
+        // Act
+        var result = _locationDAO.Object.VerifyExistance(location);
+
+        // Assert 
+        Assert.Null(result);
+
+        // VerifyFindSync if FindSync is called 3 times (every call of VerifyExistance uses 3 times)
+        _mockCollection.VerifyFindSync(Times.Exactly(3));
+       
+    }
+
+   
 
     [Fact]
     public void VerifyExistance_ShouldReturnLocation_WhenLocationExistsWithSameId() { }

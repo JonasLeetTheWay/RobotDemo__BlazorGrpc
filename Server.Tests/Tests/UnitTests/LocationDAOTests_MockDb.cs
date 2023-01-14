@@ -4,8 +4,10 @@ using BlazorGrpc.Shared.DataGenerator;
 using BlazorGrpc.Shared.Domain;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using MongoDB.Bson;
 using MongoDB.Driver;
 using Moq;
+using System.Text;
 using Xunit.Abstractions;
 
 namespace Server.Tests.UnitTests;
@@ -28,7 +30,7 @@ static class MockHelper
     }
 
 
-    
+
 }
 
 
@@ -64,7 +66,10 @@ public class DAOTests_MockDb<T>
         _mockCollection = new Mock<IMongoCollection<T>>();
         _mockContext = new Mock<IMongoDBContext>();
 
+
     }
+
+
 
 }
 
@@ -139,6 +144,7 @@ public class LocationDAOTests_MockDb : DAOTests_MockDb<Location>
         var _list = DomainDataGenerator.GenerateRandomLocations(3);
         TestLog("expected: ", _list);
 
+
         // Mock MoveNext
         Mock<IAsyncCursor<Location>> _cursor = new Mock<IAsyncCursor<Location>>();
         _cursor.Setup(_ => _.Current).Returns(_list);
@@ -154,33 +160,31 @@ public class LocationDAOTests_MockDb : DAOTests_MockDb<Location>
 
         // MOCK instance
         _mockLocationDAO = new Mock<LocationDAO>(_mockContext.Object, _mockLogger.Object);
-        var _locationDAO = _mockLocationDAO.Object;
+        var _dao = _mockLocationDAO.Object;
 
         // REAL instance
         //_mockLocationDAO = new LocationDAO(_mockContext.Object, _mockLogger.Object); 
 
         // Act
-        var result = _locationDAO.GetLocations();
+        var res = _dao.GetLocations();
         TestLog("res: ", res);
 
         // Assert 
-        for (int i = 0; i < result.Count; i++)
+        for (int i = 0; i < res.Count; i++)
         {
-            Assert.NotNull(result[i]);
-            Assert.Equal(_list[i].Id, result[i].Id);
-            Assert.Equal(_list[i].Name, result[i].Name);
-            Assert.Equal(_list[i].X, result[i].X);
-            Assert.Equal(_list[i].Y, result[i].Y);
-            Assert.Equal(_list[i].RobotIds, result[i].RobotIds);
-            _logger.WriteLine(_list[i].ToString());
+            Assert.NotNull(res[i]);
+            Assert.Equal(_list[i].Id, res[i].Id);
+            Assert.Equal(_list[i].Name, res[i].Name);
+            Assert.Equal(_list[i].X, res[i].X);
+            Assert.Equal(_list[i].Y, res[i].Y);
+            Assert.Equal(_list[i].RobotIds, res[i].RobotIds);
         }
 
-        //Verify if GetLocations() is called once, which it innerly used FindSync() once
-        _mockCollection.Verify(c => c.FindSync(It.IsAny<FilterDefinition<Location>>(),
-            It.IsAny<FindOptions<Location>>(),
-             It.IsAny<CancellationToken>()), Times.Once);
+        //VerifyFindSync if GetLocations() is called once, which it innerly used FindSync() once
+        _mockCollection.VerifyFindSync(Times.Once());
 
-        // Verify if IAsyncCursor is moved listCount-1 times (2)
+
+        // VerifyFindSync if IAsyncCursor is moved listCount-1 times (2)
         _cursor.Verify(c => c.MoveNext(It.IsAny<CancellationToken>()), Times.Exactly(_list.Count - 1));
         _cursor.Verify(c => c.Current, Times.Once());
         _cursor.Verify(c => c.Dispose(), Times.Once());
@@ -191,24 +195,24 @@ public class LocationDAOTests_MockDb : DAOTests_MockDb<Location>
     }
 
     [Fact]
-    public void InsertLocation_ShouldInsertNewLocation_WhenLocationDoesNotExist() {
-        //// Assumption: no existing location found in _mockCollection
+    public void InsertLocation_ShouldInsertNewLocation_WhenLocationDoesNotExist()
+    {
+        //// Assumption: no existing expected found in _mockCollection
 
         // Arrange
-        var location = DomainDataGenerator.GenerateLocation(); 
-      
-        var expectedId = location.Id;
+        var loc = DomainDataGenerator.GenerateLocation();
 
-        // expect empty list (since we assume no existing location found in _mockCollection)
+        var expectedId = loc.Id;
+
+        // expect empty list (since we assume no existing expected found in _mockCollection)
         var _list = new List<Location>();
         TestLog("generated Id: ", expectedId);
-        
-        _logger.WriteLine("DomainDataGenerator.GenerateLocation generated Id: " + expectedId);
 
         // Mock IAsyncCursor
         Mock<IAsyncCursor<Location>> _cursor = new Mock<IAsyncCursor<Location>>();
         _cursor.Setup(_ => _.Current).Returns(_list);
         _cursor.SetupSequence(_ => _.MoveNext(It.IsAny<CancellationToken>())).Returns(true);
+
 
         // Mock FindSync
         _mockCollection.Setup(op => op.FindSync(It.IsAny<FilterDefinition<Location>>(),
@@ -226,26 +230,27 @@ public class LocationDAOTests_MockDb : DAOTests_MockDb<Location>
 
         // Mock UpdateOne, since LocationDAO's UpdateLocation might be called (IF THERE IS ERROR)
         _mockCollection.Setup(c => c.UpdateOne(It.IsAny<FilterDefinition<Location>>(), It.IsAny<UpdateDefinition<Location>>(), It.IsAny<UpdateOptions>(), It.IsAny<CancellationToken>())).Returns(_update.Object);
-            
+
 
         _mockContext.Setup(c => c.GetCollection<Location>()).Returns(_mockCollection.Object);
 
-        var _locationDAO = new Mock<LocationDAO>(_mockContext.Object, _mockLogger.Object);
+        var _mockLocationDAO = new Mock<LocationDAO>(_mockContext.Object, _mockLogger.Object);
+        var _dao = _mockLocationDAO.Object;
 
         // Act
-        var result = _locationDAO.Object.InsertLocation(location);
+        var res = _dao.InsertLocation(loc);
         TestLog("locationDAO generated Id: ", res);
-        
+
 
         // Assert
-        Assert.Equal(expectedId, result);
+        Assert.Equal(expectedId, res);
 
         // VerifyFindSync if InsertOne is called once
         _mockCollection.Verify(
-            c => c.InsertOne(It.IsAny<Location>(), It.IsAny<InsertOneOptions>(),It.IsAny<CancellationToken>()), 
+            c => c.InsertOne(It.IsAny<Location>(), It.IsAny<InsertOneOptions>(), It.IsAny<CancellationToken>()),
             Times.Once);
 
-        // VerifyFindSync if UpdateOne is never called (since we assume no existing location found in _mockCollection)
+        // VerifyFindSync if UpdateOne is never called (since we assume no existing expected found in _mockCollection)
         _mockCollection.Verify(
             c => c.UpdateOne(It.IsAny<FilterDefinition<Location>>(), It.IsAny<UpdateDefinition<Location>>(), It.IsAny<UpdateOptions>(), It.IsAny<CancellationToken>()),
             Times.Never()
@@ -253,19 +258,21 @@ public class LocationDAOTests_MockDb : DAOTests_MockDb<Location>
     }
 
     [Fact]
-    public void VerifyExistance_ShouldReturnNull_WhenLocationDoesNotExist() {
-        //// Assumption: no existing location found in _mockCollection
+    public void VerifyExistance_ShouldReturnNull_WhenLocationDoesNotExist()
+    {
+        //// Assumption: no existing expected found in _mockCollection
 
         // Arrange
-        var location = DomainDataGenerator.GenerateLocation();
-        
-        // expect empty list (since we assume no existing location found in _mockCollection)
+        var loc = DomainDataGenerator.GenerateLocation();
+
+        // expect empty list (since we assume no existing expected found in _mockCollection)
         var _list = new List<Location>();
 
         // Mock IAsyncCursor
         Mock<IAsyncCursor<Location>> _cursor = new Mock<IAsyncCursor<Location>>();
         _cursor.Setup(_ => _.Current).Returns(_list);
         _cursor.SetupSequence(_ => _.MoveNext(It.IsAny<CancellationToken>())).Returns(true);
+
 
         // Mock FindSync
         _mockCollection.Setup(op => op.FindSync(It.IsAny<FilterDefinition<Location>>(),
@@ -274,21 +281,22 @@ public class LocationDAOTests_MockDb : DAOTests_MockDb<Location>
 
         _mockContext.Setup(c => c.GetCollection<Location>()).Returns(_mockCollection.Object);
 
-        var _locationDAO = new Mock<LocationDAO>(_mockContext.Object, _mockLogger.Object);
+        var _mockLocationDAO = new Mock<LocationDAO>(_mockContext.Object, _mockLogger.Object);
+        var _dao = _mockLocationDAO.Object;
 
         // Act
-        var result = _locationDAO.Object.VerifyExistance(location);
+        var res = _dao.VerifyExistance(loc);
         TestLog("res: ", res);
 
         // Assert 
-        Assert.Null(result);
+        Assert.Null(res);
 
         // VerifyFindSync if FindSync is called 3 times (every call of VerifyExistance uses 3 times)
         _mockCollection.VerifyFindSync(Times.Exactly(3));
-       
+
     }
 
-   
+
     [Fact]
     public void VerifyExistance_ShouldReturnLocation_WhenData_MatchIdFilter()
     {
@@ -477,6 +485,52 @@ public class LocationDAOTests_MockDb : DAOTests_MockDb<Location>
         // VerifyFindSync if FindSync is called 3 times (every call of VerifyExistance uses 3 times)
         _mockCollection.VerifyFindSync(Times.AtLeast(3));
     }
+
+    //[Fact]
+    //public void VerifyExistance_ShouldThrowException_WhenLocationExistsWithSameNameAndDifferentCoordinates() {
+    //    // Arrange
+    //    var expected = DomainDataGenerator.GenerateLocation();
+    //    TestLog("expected Location: ",expected);
+
+    //    var locFilter = new Location(){
+    //        Name = expected.Name,
+    //        X = expected.X + 1, // different X
+    //        Y = expected.Y + 1 // different Y
+    //    };
+    //    TestLog("locFilter: ",locFilter);
+
+    //    // what shall list data have? based on the logic.
+    //    List<Location> _list = TestDataGeneratorBasedOnLogic.ForIAsyncCursor.MakeLocationList(locFilter, expected);
+
+    //    // Mock IAsyncCursor
+    //    // here we define what item shall FindSync returns
+    //    Mock<IAsyncCursor<Location>> _cursor = new Mock<IAsyncCursor<Location>>();
+    //    _cursor.Setup(_ => _.Current).Returns(_list);
+    //    _cursor.SetupSequence(_ => _.MoveNext(It.IsAny<CancellationToken>())).Returns(true);
+
+    //    // Mock FindSync
+    //    _mockCollection.Setup(op => op.FindSync(It.IsAny<FilterDefinition<Location>>(),
+    //    It.IsAny<FindOptions<Location, Location>>(),
+    //    It.IsAny<CancellationToken>())).Returns(_cursor.Object);
+
+    //    _mockContext.Setup(c => c.GetCollection<Location>()).Returns(_mockCollection.Object);
+
+    //    var _mockLocationDAO = new Mock<LocationDAO>(_mockContext.Object, _mockLogger.Object);
+
+    //    // Act
+    //    var res = _dao.VerifyExistance(locFilter);
+    //    TestLog("res: ", res);
+
+
+    //    // Assert
+    //    Assert.Null(res);
+
+    //    // VerifyFindSync if FindSync is called 3 times (every call of VerifyExistance uses 3 times)
+    //    _mockCollection.VerifyFindSync(Times.AtLeast(3));
+
+    //}
+
+
     [Fact]
     public void FindLocations_ShouldReturnLocation_WhenFilterMatchesSingleLocation()
     {
@@ -599,7 +653,7 @@ public class LocationDAOTests_MockDb : DAOTests_MockDb<Location>
     public void DeleteLocation_ShouldDeleteMultipleLocations_WhenFilterMatchesMultipleLocations() { }
 
 
-    
+
 
 
 
@@ -607,4 +661,3 @@ public class LocationDAOTests_MockDb : DAOTests_MockDb<Location>
 
 
 }
-

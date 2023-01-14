@@ -50,7 +50,7 @@ public class LocationDAOTests_MockDb : DAOTests_MockDb<Location>
 {
     private readonly Mock<ILogger<LocationDAO>> _mockLogger = new Mock<ILogger<LocationDAO>>();
 
-    private LocationDAO _locationDAO;
+    private Mock<LocationDAO> _mockLocationDAO;
 
     public LocationDAOTests_MockDb(ITestOutputHelper logger) : base(logger)
     {
@@ -72,15 +72,15 @@ public class LocationDAOTests_MockDb : DAOTests_MockDb<Location>
         It.IsAny<FindOptions<Location, Location>>(),
         It.IsAny<CancellationToken>())).Returns(_cursor.Object);
 
-        _logger.WriteLine(_mockCollection.ToString());
-
-
         // Mock GetCollection
         _mockContext.Setup(c => c.GetCollection<Location>()).Returns(_mockCollection.Object);
 
-        _logger.WriteLine(_mockContext.Object.GetCollection<Location>().ToString());
+        // MOCK instance
+        _mockLocationDAO = new Mock<LocationDAO>(_mockContext.Object, _mockLogger.Object);
+        var _locationDAO = _mockLocationDAO.Object;
 
-        _locationDAO = new LocationDAO(_mockContext.Object, _mockLogger.Object);
+        // REAL instance
+        //_mockLocationDAO = new LocationDAO(_mockContext.Object, _mockLogger.Object); 
 
         // Act
         var result = _locationDAO.GetLocations();
@@ -95,9 +95,6 @@ public class LocationDAOTests_MockDb : DAOTests_MockDb<Location>
             Assert.Equal(_list[i].Y, result[i].Y);
             Assert.Equal(_list[i].RobotIds, result[i].RobotIds);
             _logger.WriteLine(_list[i].ToString());
-
-            // at the end of each loop, mock that the cursor will move to the next item
-            _cursor.SetupSequence(_ => _.MoveNext(It.IsAny<CancellationToken>())).Returns(true);
         }
 
         //Verify if GetLocations() is called once, which it innerly used FindSync() once
@@ -107,6 +104,12 @@ public class LocationDAOTests_MockDb : DAOTests_MockDb<Location>
 
         // Verify if IAsyncCursor is moved listCount-1 times (2)
         _cursor.Verify(c => c.MoveNext(It.IsAny<CancellationToken>()), Times.Exactly(_list.Count - 1));
+        _cursor.Verify(c => c.Current, Times.Once());
+        _cursor.Verify(c => c.Dispose(), Times.Once());
+
+        _mockCollection.VerifyNoOtherCalls();
+        _cursor.VerifyNoOtherCalls();
+
     }
 
     [Fact]

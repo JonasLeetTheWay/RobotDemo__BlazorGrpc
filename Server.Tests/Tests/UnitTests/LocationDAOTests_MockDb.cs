@@ -203,6 +203,7 @@ public class LocationDAOTests_MockDb : DAOTests_MockDb<Location>
         // Mock IAsyncCursor
         Mock<IAsyncCursor<Location>> _cursor = new Mock<IAsyncCursor<Location>>();
         _cursor.Setup(_ => _.Current).Returns(_list);
+        _cursor.SetupSequence(_ => _.MoveNext(It.IsAny<CancellationToken>())).Returns(true);
 
         // Mock FindSync
         _mockCollection.Setup(op => op.FindSync(It.IsAny<FilterDefinition<Location>>(),
@@ -259,6 +260,7 @@ public class LocationDAOTests_MockDb : DAOTests_MockDb<Location>
         // Mock IAsyncCursor
         Mock<IAsyncCursor<Location>> _cursor = new Mock<IAsyncCursor<Location>>();
         _cursor.Setup(_ => _.Current).Returns(_list);
+        _cursor.SetupSequence(_ => _.MoveNext(It.IsAny<CancellationToken>())).Returns(true);
 
         // Mock FindSync
         _mockCollection.Setup(op => op.FindSync(It.IsAny<FilterDefinition<Location>>(),

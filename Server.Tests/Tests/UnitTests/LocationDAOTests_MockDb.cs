@@ -74,6 +74,55 @@ public class LocationDAOTests_MockDb : DAOTests_MockDb<Location>
 
     private Mock<LocationDAO> _mockLocationDAO;
 
+    //protected void TestLog(object obj, string message = "", params object[] args)
+    //{
+    //    StringBuilder strBuilder = new();
+    //    for (int i = 0; i < args.Length; i++)
+    //    {
+    //        strBuilder.Append(" " + args[i]);
+    //    }
+    //    _logger.WriteLine(message + obj?.ToString() + strBuilder.ToString());
+    //}
+
+    //protected void TestLog(IEnumerable<object> objs, string message = "", params object[] args)
+    //{
+    //    StringBuilder strBuilder = new();
+    //    StringBuilder strBuilder2 = new();
+    //    for (int i = 0; i < args.Length; i++)
+    //    {
+    //        strBuilder.Append(" " + args[i]);
+    //    }
+    //    foreach (var obj in objs)
+    //    {
+    //        _logger.WriteLine(message + obj?.ToString() + strBuilder.ToString());
+    //    }
+
+    //}
+
+    protected void TestLog(string message = "", object? obj = null, params object[] args)
+    {
+        StringBuilder strBuilder = new();
+        for (int i = 0; i < args.Length; i++)
+        {
+            strBuilder.Append(" " + args[i]);
+        }
+        _logger.WriteLine(message + obj?.ToString() + strBuilder.ToString());
+    }
+
+    protected void TestLog(string message = "", IEnumerable<object>? objs = null, params object[] args)
+    {
+        StringBuilder strBuilder = new();
+        for (int i = 0; i < args.Length; i++)
+        {
+            strBuilder.Append(" " + args[i]);
+        }
+        foreach (var obj in objs)
+        {
+            _logger.WriteLine(message + obj?.ToString() + strBuilder.ToString());
+        }
+
+    }
+
     public LocationDAOTests_MockDb(ITestOutputHelper logger) : base(logger)
     {
     }

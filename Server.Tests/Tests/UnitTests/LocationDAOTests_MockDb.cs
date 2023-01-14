@@ -125,6 +125,11 @@ public class LocationDAOTests_MockDb : DAOTests_MockDb<Location>
 
     public LocationDAOTests_MockDb(ITestOutputHelper logger) : base(logger)
     {
+        _mockLogger.Setup(logger => logger.Log(It.IsAny<LogLevel>(), It.IsAny<EventId>(), It.IsAny<object>(), It.IsAny<Exception>(), It.IsAny<Func<object, Exception, string>>()))
+            .Callback((LogLevel logLevel, EventId eventId, object state, Exception exception, Func<object, Exception, string> formatter) =>
+            {
+                _logger.WriteLine(formatter(state, exception).ToString());
+            });
     }
 
     [Fact]

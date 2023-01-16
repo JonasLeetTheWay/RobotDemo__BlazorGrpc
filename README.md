@@ -12,9 +12,9 @@ This project is a system that allows users to track and manage a fleet of autono
 
 ## Concepts utilized:
 - `Microservices`: a collection of small, independent services that communicate with APIs, enabling flexibility, scalability, and maintainability
+- `Blazor`: single-language C# full stack .NET SPA framework powered by WebAssembly, has library for gRPC, Protobuf.
 - `gRPC`: a high-performance, open-source RPC framework that enables efficient communication between services
 - `Protobuf`: a language- and platform-neutral data serialization format used to define gRPC service interfaces
-- `MVC Frontend`: a common .NET framework for developing high-performant web application
 - `DAO`: a data access object (DAO) for interacting with a specific collection in a database.
 - `Dependency injection`: a software design pattern that allows for the separation of concerns and the management of dependencies between objects
 

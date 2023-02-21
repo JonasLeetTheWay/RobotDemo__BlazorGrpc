@@ -9,6 +9,7 @@
   <ItemGroup>
     <None Remove="Protos\location.proto" />
     <None Remove="Protos\robot.proto" />
+    <None Remove="Protos\robottest.proto" />
     <None Remove="Protos\shared_model.proto" />
     <None Remove="Protos\weatherforecast.proto" />
   </ItemGroup>
@@ -27,6 +28,7 @@
     <Protobuf Include="Protos\location.proto" />
     <Protobuf Include="Protos\robot.proto" />
     <Protobuf Include="Protos\shared_model.proto" />
+    <Protobuf Include="Protos\robottest.proto" />
     <Protobuf Include="Protos\weatherforecast.proto" />
   </ItemGroup>
 

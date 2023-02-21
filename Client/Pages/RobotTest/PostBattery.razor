@@ -1,0 +1,62 @@
+﻿@inject RobotTestService.RobotTestServiceClient client
+@page robotdiagnose/postbattery
+
+<h1>Robot Test</h1>
+
+<h3>PostBattery</h3>
+
+
+<div class="row">
+    <div class="col-md-4">
+        <h3>Request</h3>
+        <form>
+            <div class="form-group">
+                <label for="battery-id">Battery ID</label>
+                <input type="text" class="form-control" id="battery-id" @bind="BatteryDiagnosticModel.BatteryDiagnosticRequest.BatteryId" />
+            </div>
+            <div class="form-group">
+                <label for="threshold">Threshold</label>
+                <input type="number" class="form-control" id="threshold" @bind="BatteryDiagnosticModel.BatteryDiagnosticRequest.Threshold" />
+            </div>
+            <button class="btn btn-primary" @onclick="PostBatteryDiagnostic">Submit</button>
+        </form>
+    </div>
+    <div class="col-md-8">
+        <h3>Response</h3>
+        <div>
+            <span>Request ID:</span>
+            <span>@BatteryDiagnosticModel.BatteryDiagnosticResponse.RequestId</span>
+        </div>
+        <div>
+            <span>Success:</span>
+            <span>@BatteryDiagnosticModel.BatteryDiagnosticResponse.Success</span>
+        </div>
+        <div>
+            <span>Error Message:</span>
+            <span>@BatteryDiagnosticModel.BatteryDiagnosticResponse.ErrMsg</span>
+        </div>
+    </div>
+</div>
+
+@code {
+    
+    [Inject] 
+    public NavigationManager Navigation { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        locations = (await client.GetLocationsAsync(new Empty())).Locations;
+    }
+
+    private async Task PostBatteryDiagnostic()
+    {
+        var channel = GrpcChannel.ForAddress("https://localhost:5001");
+        var client = new RobotDiagnosticService.RobotDiagnosticServiceClient(channel);
+        var request = new SimpleRequest
+            {
+                RequestId = BatteryDiagnosticModel.RequestId
+            };
+        var response = await client.PostBatteryDiagnosticAsync(request);
+        BatteryDiagnosticModel.BatteryDiagnosticResponse = response;
+    }
+}

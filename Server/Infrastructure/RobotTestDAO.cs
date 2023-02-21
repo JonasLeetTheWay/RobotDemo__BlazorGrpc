@@ -9,4 +9,43 @@ public class RobotTestDAO : BaseDAO<RobotTestData>
     }
 }
 
+/*
+public class BatteryTest : GeneralTestData
+{
+}
+public class LidarTest : GeneralTestData
+{
+}
+
+public class IOTest : GeneralTestData
+{
+}
+
+public class IMUTest : GeneralTestData
+{
+}
+
+public class FrontCameraTest : GeneralTestData
+{
+}
+public class RearCameraTest : GeneralTestData
+{
+}
+
+public class WheelMotorTest : GeneralTestDataWithAngle
+{
+}
+
+public class LEDTest : GeneralTestData
+{
+}
+
+public class BuzzerTest : GeneralTestData
+{
+}
+
+public class EmergencyStopTest : GeneralTestData
+{
+}
+ */
 
